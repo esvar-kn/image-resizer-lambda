@@ -1,0 +1,5 @@
+# Copy this file to `terraform.tfvars` and replace with your actual AWS keys.
+# NEVER commit `terraform.tfvars` to version control!
+
+aws_access_key = "YOUR_AWS_ACCESS_KEY"
+aws_secret_key = "YOUR_AWS_SECRET_KEY"
