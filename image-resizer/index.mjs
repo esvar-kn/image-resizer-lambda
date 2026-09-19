@@ -4,6 +4,22 @@ import { S3Client, GetObjectCommand, PutObjectCommand } from '@aws-sdk/client-s3
 const s3 = new S3Client({});
 
 /**
+ * Utility helper to convert an S3 ReadableStream to a Buffer
+ */
+const streamToBuffer = async (stream) => {
+  if (typeof stream.transformToByteArray === 'function') {
+    const byteArray = await stream.transformToByteArray();
+    return Buffer.from(byteArray);
+  }
+  return new Promise((resolve, reject) => {
+    const chunks = [];
+    stream.on('data', (chunk) => chunks.push(chunk));
+    stream.on('error', reject);
+    stream.on('end', () => resolve(Buffer.concat(chunks)));
+  });
+};
+
+/**
  * AWS Lambda handler for automated S3 image resizing.
  * Triggered when a new image is uploaded to S3.
  */
@@ -27,7 +43,7 @@ export const handler = async (event) => {
 
     // 1. Retrieve the original image from S3
     const original = await s3.send(new GetObjectCommand({ Bucket: bucket, Key: key }));
-    const buffer = await original.Body.transformToBuffer();
+    const buffer = await streamToBuffer(original.Body);
 
     // 2. Resize image using sharp
     const resizedBuffer = await sharp(buffer)
