@@ -72,7 +72,7 @@ resource "aws_lambda_function" "resizer" {
   function_name    = var.function_name
   role             = aws_iam_role.lambda_role.arn
   handler          = "index.handler"
-  runtime          = "nodejs20.x"
+  runtime          = "nodejs22.x"
   source_code_hash = data.archive_file.lambda_zip.output_base64sha256
   timeout          = 10
   memory_size      = 256
