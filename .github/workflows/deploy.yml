@@ -1,9 +1,11 @@
-name: Deploy Lambda
+name: Deploy Lambda & Infrastructure
 
 on:
   push:
     branches: [main]
-    paths: ['image-resizer/**']
+    paths:
+      - 'image-resizer/**'
+      - 'terraform/**'
   workflow_dispatch:
 
 jobs:
@@ -17,6 +19,9 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: '22'
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
 
       - name: Install dependencies
         run: npm ci --os=linux --cpu=x64
@@ -32,6 +37,15 @@ jobs:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ap-south-2
+
+      - name: Terraform Apply
+        run: |
+          terraform init
+          terraform apply -auto-approve
+        working-directory: ./terraform
+        env:
+          TF_VAR_aws_access_key: ${{ secrets.TERRAFORM_AWS_ACCESS_KEY_ID }}
+          TF_VAR_aws_secret_key: ${{ secrets.TERRAFORM_AWS_SECRET_ACCESS_KEY }}
 
       - name: Deploy to AWS Lambda
         run: aws lambda update-function-code --function-name image-resizer --zip-file fileb://image-resizer/function.zip

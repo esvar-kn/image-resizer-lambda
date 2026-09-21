@@ -4,13 +4,9 @@ provider "aws" {
   secret_key = var.aws_secret_key
 }
 
-# 1. S3 Buckets
+# 1. Single S3 Bucket for Originals & Resized Images
 resource "aws_s3_bucket" "original-images" {
   bucket = "my-image-resizer-bucket-original"
-}
-
-resource "aws_s3_bucket" "resized-images" {
-  bucket = "my-image-resizer-bucket-resized"
 }
 
 # 2. IAM Role for Lambda
@@ -27,7 +23,7 @@ resource "aws_iam_role" "lambda_role" {
   })
 }
 
-# 3. IAM Policy for Lambda (Least Privilege)
+# 3. IAM Policy for Lambda (Least Privilege - Single Bucket)
 resource "aws_iam_role_policy" "lambda_policy" {
   name = "image-resizer-lambda-policy"
   role = aws_iam_role.lambda_role.id
@@ -43,18 +39,12 @@ resource "aws_iam_role_policy" "lambda_policy" {
       {
         Effect   = "Allow"
         Action   = ["s3:GetObject"]
-        Resource = [
-          "${aws_s3_bucket.original-images.arn}/*",
-          "${aws_s3_bucket.original-images.arn}/originals/*"
-        ]
+        Resource = "${aws_s3_bucket.original-images.arn}/originals/*"
       },
       {
         Effect   = "Allow"
         Action   = ["s3:PutObject"]
-        Resource = [
-          "${aws_s3_bucket.resized-images.arn}/*",
-          "${aws_s3_bucket.original-images.arn}/resized/*"
-        ]
+        Resource = "${aws_s3_bucket.original-images.arn}/resized/*"
       }
     ]
   })
